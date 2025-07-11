@@ -15,6 +15,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('api/cart/', include('cart.urls')),
+    path('api/orders/', include('orders.urls')),
+    path('api/wishlist/', include('wishlist.urls')),
 ]
 # ✅ Add this block to serve media during development
 if settings.DEBUG:
