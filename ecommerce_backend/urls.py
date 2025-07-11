@@ -14,6 +14,7 @@ router.register(r'categories', CategoryViewSet, basename='category')
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
+    path('api/cart/', include('cart.urls')),
 ]
 # ✅ Add this block to serve media during development
 if settings.DEBUG:
