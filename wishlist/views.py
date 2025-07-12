@@ -6,6 +6,8 @@ from .models import Wishlist
 from .serializers import WishlistSerializer
 from products.models import Product
 
+
+
 class WishlistViewSet(viewsets.ModelViewSet):
     serializer_class = WishlistSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -13,22 +15,18 @@ class WishlistViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Wishlist.objects.filter(user=self.request.user)
 
-    @action(detail=False, methods=['post'])
-    def add(self, request):
-        product_id = request.data.get('product_id')
+    def create(self, request, *args, **kwargs):
+        product_id = request.data.get('product')
+        if not product_id:
+            return Response({'error': 'Product ID is required'}, status=400)
+
         product = Product.objects.filter(id=product_id).first()
         if not product:
             return Response({'error': 'Product not found'}, status=404)
-        
+
         wishlist, created = Wishlist.objects.get_or_create(user=request.user, product=product)
         if not created:
             return Response({'message': 'Already in wishlist'}, status=200)
-        
-        return Response(WishlistSerializer(wishlist).data, status=201)
 
-    @action(detail=False, methods=['post'])
-    def remove(self, request):
-        product_id = request.data.get('product_id')
-        Wishlist.objects.filter(user=request.user, product_id=product_id).delete()
-        return Response({'message': 'Removed from wishlist'}, status=204)
-
+        serializer = self.get_serializer(wishlist)
+        return Response(serializer.data, status=201)

@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'rest_framework.authtoken',
     'corsheaders',
     'accounts', 
     'products',
@@ -145,3 +146,15 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Custom user model
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ]
+}
+
+
+DEFAULT_FROM_EMAIL = 'no-reply@yourdomain.com'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # for testing
+FRONTEND_URL = 'http://localhost:3000'  # or your deployed frontend
