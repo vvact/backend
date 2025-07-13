@@ -12,29 +12,55 @@ from products.serializers import (
 )
 from rest_framework import filters, viewsets
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from random import sample
+from django.db.models import Count
+from django.utils import timezone
 
-# 🔹 Categories
 class CategoryViewSet(viewsets.ModelViewSet):
-    queryset = Category.objects.all()
+    queryset = Category.objects.all().order_by('name')  # 👈 Add this
     serializer_class = CategorySerializer
     lookup_field = 'slug'
 
 # 🔹 Products
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.prefetch_related('variants', 'images', 'attributes').all()
+    queryset = Product.objects.select_related('category') \
+        .prefetch_related(
+            'variants__size',
+            'variants__color',
+            'images',
+            'attributes__attribute',
+            'attributes__value'
+        ).all()
+
     serializer_class = ProductSerializer
     lookup_field = 'slug'
 
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-
-     # 🎯 These fields allow filtering
-    filterset_fields = ['category', 'variants__color', 'variants__size']
-    
-    # 🔍 These fields allow search (partial match)
+    filterset_fields = ['category__slug', 'variants__color', 'variants__size']
     search_fields = ['name', 'description']
 
+    @action(detail=True, methods=['get'], url_path='related')
+    def related_products(self, request, slug=None):
+        product = self.get_object()
+        related = Product.objects.filter(category=product.category).exclude(id=product.id)
 
+        # Limit to 6 if any related are found
+        if related.exists():
+            related = related[:6]
+        else:
+            # Fallback: Return random 6 products excluding the current one
+            all_others = Product.objects.exclude(id=product.id)
+            count = all_others.count()
+            if count <= 6:
+                related = all_others
+            else:
+                random_ids = sample(list(all_others.values_list('id', flat=True)), 6)
+                related = Product.objects.filter(id__in=random_ids)
 
+        serializer = self.get_serializer(related, many=True)
+        return Response(serializer.data)
 # 🔹 Sizes
 class SizeViewSet(viewsets.ModelViewSet):
     queryset = Size.objects.all()

@@ -1,64 +1,67 @@
 from rest_framework import serializers
-from django.db import transaction
-from .models import Order, OrderItem
+from rest_framework.exceptions import ValidationError
+from .models import Order, OrderItem, Neighborhood
 from products.models import Product
+from django.db import transaction
+
+
+class NeighborhoodSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Neighborhood
+        fields = ['id', 'name']
+
 
 class OrderItemSerializer(serializers.ModelSerializer):
-    price = serializers.DecimalField(max_digits=8, decimal_places=2, read_only=True)  # prevent frontend from submitting price
-
     class Meta:
         model = OrderItem
         fields = ['product', 'quantity', 'price']
+        read_only_fields = ['price']  # ✅ Prevent clients from setting price
 
-    def validate(self, data):
-        product = data['product']
-        quantity = data['quantity']
-
-        if quantity < 1:
-            raise serializers.ValidationError("Quantity must be at least 1.")
-
-        if product.stock < quantity:
-            raise serializers.ValidationError(
-                f"Only {product.stock} item(s) available for '{product.name}'."
-            )
-
-        return data
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)
+    email = serializers.EmailField(required=False)
 
     class Meta:
         model = Order
-        fields = ['id', 'user', 'full_name', 'address', 'phone', 'status', 'created_at', 'items']
-        read_only_fields = ['id', 'status', 'created_at', 'user']
+        fields = [
+            'id', 'user', 'email', 'phone_number',
+            'neighborhood', 'specific_address', 'notes',
+            'total', 'status', 'items', 'created_at'
+        ]
+        read_only_fields = ['user', 'status', 'created_at', 'total']
 
     def create(self, validated_data):
         items_data = validated_data.pop('items')
-        user = self.context['request'].user if self.context['request'].user.is_authenticated else None
+        user = (
+            self.context['request'].user
+            if self.context.get('request') and self.context['request'].user.is_authenticated
+            else None
+        )
 
         with transaction.atomic():
-            order = Order.objects.create(user=user, **validated_data)
+            # Validate stock first
+            for item in items_data:
+                product = Product.objects.select_for_update().get(id=item['product'].id)
+                if product.stock < item['quantity']:
+                    raise ValidationError(f"Insufficient stock for product: {product.name}")
 
-            for item_data in items_data:
-                product = item_data['product']
-                quantity = item_data['quantity']
+            # Calculate total price
+            total = sum(item['quantity'] * item['product'].price for item in items_data)
 
-                # Extra stock check (in case frontend skips it)
-                if product.stock < quantity:
-                    raise serializers.ValidationError(
-                        f"Not enough stock for {product.name}. Only {product.stock} left."
-                    )
+            # Create order
+            order = Order.objects.create(user=user, total=total, **validated_data)
 
-                # Deduct stock and save product
-                product.stock -= quantity
-                product.save()
-
-                # Create order item with actual product price
+            # Create order items and deduct stock
+            for item in items_data:
+                product = Product.objects.select_for_update().get(id=item['product'].id)
                 OrderItem.objects.create(
                     order=order,
                     product=product,
-                    quantity=quantity,
-                    price=product.price
+                    quantity=item['quantity'],
+                    price=product.price  # ✅ Set price based on current product price
                 )
+                product.stock -= item['quantity']
+                product.save()
 
         return order

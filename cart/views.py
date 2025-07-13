@@ -1,20 +1,24 @@
-# cart/views.py
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
 from .models import Cart, CartItem
 from .serializers import CartSerializer, CartItemSerializer
-from products.models import Product
-from django.shortcuts import get_object_or_404
+from products.models import Product, ProductVariant
 
 class CartViewSet(viewsets.ViewSet):
+    permission_classes = [AllowAny]
+
     def get_cart(self, request):
-        if request.user.is_authenticated:
-            cart, created = Cart.objects.get_or_create(user=request.user)
-        else:
-            if not request.session.session_key:
-                request.session.save()
-            cart, created = Cart.objects.get_or_create(session_key=request.session.session_key)
+        # 🔑 Ensure session exists
+        if not request.session.session_key:
+            request.session.create()
+
+        session_key = request.session.session_key
+
+        cart, created = Cart.objects.get_or_create(
+            user=request.user if request.user.is_authenticated else None,
+            session_key=None if request.user.is_authenticated else session_key
+        )
         return cart
 
     def list(self, request):
@@ -22,35 +26,25 @@ class CartViewSet(viewsets.ViewSet):
         serializer = CartSerializer(cart)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['post'])
-    def add(self, request):
-        cart = self.get_cart(request)
-        product_id = request.data.get("product_id")
-        quantity = int(request.data.get("quantity", 1))
-        product = get_object_or_404(Product, id=product_id)
+class CartItemViewSet(viewsets.ModelViewSet):
+    serializer_class = CartItemSerializer
+    permission_classes = [AllowAny]
 
-        item, created = CartItem.objects.get_or_create(cart=cart, product=product)
-        if not created:
-            item.quantity += quantity
-        else:
-            item.quantity = quantity
-        item.save()
+    def get_cart(self):
+        request = self.request
+        if not request.session.session_key:
+            request.session.create()
 
-        return Response({"message": "Item added to cart"}, status=201)
+        session_key = request.session.session_key
 
-    @action(detail=True, methods=['delete'])
-    def remove(self, request, pk=None):
-        cart = self.get_cart(request)
-        item = get_object_or_404(CartItem, cart=cart, id=pk)
-        item.delete()
-        return Response({"message": "Item removed"}, status=204)
+        cart, created = Cart.objects.get_or_create(
+            user=request.user if request.user.is_authenticated else None,
+            session_key=None if request.user.is_authenticated else session_key
+        )
+        return cart
 
-    @action(detail=True, methods=['patch'])
-    def update_quantity(self, request, pk=None):
-        cart = self.get_cart(request)
-        item = get_object_or_404(CartItem, cart=cart, id=pk)
-        quantity = int(request.data.get("quantity", 1))
-        item.quantity = quantity
-        item.save()
-        return Response({"message": "Quantity updated"}, status=200)
+    def get_queryset(self):
+        return self.get_cart().items.all()
 
+    def get_serializer_context(self):
+        return {'cart': self.get_cart()}

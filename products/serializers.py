@@ -6,20 +6,11 @@ from products.models import (
     ProductAttribute
 )
 
-# 🔹 Category with nested children
-
-class SubCategorySerializer(serializers.ModelSerializer):
+# 🔹 Category
+class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name', 'slug']
-        read_only_fields = ['id', 'slug']
-
-class CategorySerializer(serializers.ModelSerializer):
-    children = SubCategorySerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Category
-        fields = ['id', 'name', 'slug', 'children']
         read_only_fields = ['id', 'slug']
 
 
@@ -30,12 +21,14 @@ class SizeSerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
         read_only_fields = ['id']
 
+
 # 🔹 Color
 class ColorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Color
         fields = ['id', 'name', 'hex_code']
         read_only_fields = ['id']
+
 
 # 🔹 Attribute & Value
 class AttributeValueSerializer(serializers.ModelSerializer):
@@ -44,6 +37,7 @@ class AttributeValueSerializer(serializers.ModelSerializer):
         fields = ['id', 'value']
         read_only_fields = ['id']
 
+
 class AttributeSerializer(serializers.ModelSerializer):
     values = AttributeValueSerializer(many=True, read_only=True)
 
@@ -51,6 +45,7 @@ class AttributeSerializer(serializers.ModelSerializer):
         model = Attribute
         fields = ['id', 'name', 'values']
         read_only_fields = ['id']
+
 
 # 🔹 Product Attribute
 class ProductAttributeSerializer(serializers.ModelSerializer):
@@ -62,12 +57,14 @@ class ProductAttributeSerializer(serializers.ModelSerializer):
         fields = ['id', 'attribute', 'value']
         read_only_fields = ['id', 'attribute', 'value']
 
+
 # 🔹 Product Images
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage
         fields = ['id', 'image', 'alt_text']
         read_only_fields = ['id']
+
 
 # 🔹 Product Variants
 class ProductVariantSerializer(serializers.ModelSerializer):
@@ -78,6 +75,7 @@ class ProductVariantSerializer(serializers.ModelSerializer):
         model = ProductVariant
         fields = ['id', 'size', 'color', 'stock', 'additional_price']
         read_only_fields = ['id', 'size', 'color']
+
 
 # 🔹 Product
 class ProductSerializer(serializers.ModelSerializer):
@@ -93,4 +91,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'price', 'stock', 'main_image', 'created_at',
             'category', 'images', 'variants', 'attributes'
         ]
-        read_only_fields = ['id', 'slug', 'created_at', 'category', 'images', 'variants', 'attributes']
+        read_only_fields = [
+            'id', 'slug', 'created_at', 'category',
+            'images', 'variants', 'attributes'
+        ]
