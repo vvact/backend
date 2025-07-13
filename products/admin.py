@@ -24,7 +24,7 @@ class ProductAttributeInline(admin.TabularInline):
 # 🔹 Product Admin
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['name', 'slug', 'price', 'stock', 'created_at']
+    list_display = ['name', 'slug', 'base_price', 'stock', 'created_at']
     prepopulated_fields = {'slug': ('name',)}
     list_filter = ['category']
     search_fields = ['name', 'description']
