@@ -1,12 +1,11 @@
-# orders/urls.py
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import OrderViewSet
-
-router = DefaultRouter()
-router.register(r'', OrderViewSet, basename='order')
+from django.urls import path
+from .views import CreateOrderView, OrderDetailView, MyOrdersView, UpdateOrderStatusView
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('create/', CreateOrderView.as_view(), name='create-order'),
+    path('<int:pk>/', OrderDetailView.as_view(), name='order-detail'),
+    path('my/', MyOrdersView.as_view(), name='my-orders'),
+    path('<int:pk>/status/', UpdateOrderStatusView.as_view(), name='update-order-status'),
 ]
-# This file defines the URL routing for the orders app, allowing access to the OrderViewSet.
+# orders/urls.py
+# This file defines the URL patterns for the orders app, mapping URLs to their respective views.

@@ -1,15 +1,23 @@
-# products/urls.py
 
+# products/urls.py
 from django.urls import path, include
+# Importing the router from the products app
+
 from rest_framework.routers import DefaultRouter
-from .views import ProductViewSet, CategoryViewSet
+from products.views import (
+    CategoryViewSet, ProductViewSet, SizeViewSet, ColorViewSet,
+    AttributeViewSet, AttributeValueViewSet,
+    ProductImageViewSet, ProductVariantViewSet
+)
 
 router = DefaultRouter()
-router.register('products', ProductViewSet)
-router.register('categories', CategoryViewSet)
+router.register(r'categories', CategoryViewSet)
+router.register(r'products', ProductViewSet)
+router.register(r'sizes', SizeViewSet)
+router.register(r'colors', ColorViewSet)
+router.register(r'attributes', AttributeViewSet)
+router.register(r'attribute-values', AttributeValueViewSet)
+router.register(r'images', ProductImageViewSet)
+router.register(r'variants', ProductVariantViewSet)
 
-urlpatterns = [
-    path('', include(router.urls)),
-]
-# This file defines the URL routing for the products app, allowing access to the Product and Category viewsets.
-# The DefaultRouter automatically creates the necessary routes for the viewsets.
+urlpatterns = router.urls

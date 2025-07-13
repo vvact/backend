@@ -1,46 +1,53 @@
-# orders/views.py
-from rest_framework import viewsets, status
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from .models import Order, OrderItem
+from rest_framework.views import APIView
+from .models import Order
 from .serializers import OrderSerializer
-from cart.models import Cart, CartItem
 
-class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all().order_by('-created_at')
+
+# orders/views.py
+
+# This file contains views for handling orders in an e-commerce application.
+
+# 0. View all orders
+class OrderListView(generics.ListAPIView):
+    queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-    def create(self, request):
-        user = request.user
-        shipping_address = request.data.get('shipping_address')
-        phone = request.data.get('phone')
+# 1. Create an order
+class CreateOrderView(generics.CreateAPIView):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.AllowAny]  # Allow guest or authenticated
 
-        # Get user's cart
-        cart = Cart.objects.filter(user=user).first()
-        if not cart or cart.items.count() == 0:
-            return Response({"error": "Cart is empty."}, status=400)
+# 2. View a specific order
+class OrderDetailView(generics.RetrieveAPIView):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-        # Calculate total
-        total = sum(item.product.price * item.quantity for item in cart.items.all())
+# 3. View all orders by the logged-in user
+class MyOrdersView(generics.ListAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-        # Create order
-        order = Order.objects.create(
-            user=user,
-            shipping_address=shipping_address,
-            phone=phone,
-            total=total,
-        )
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user)
 
-        # Create order items
-        for item in cart.items.all():
-            OrderItem.objects.create(
-                order=order,
-                product=item.product,
-                quantity=item.quantity,
-                price=item.product.price
-            )
+# 4. Update order status (e.g., mark as paid)
+class UpdateOrderStatusView(APIView):
+    permission_classes = [permissions.IsAuthenticated]  # Or IsAdminUser if admin-only
 
-        # Clear cart
-        cart.items.all().delete()
+    def patch(self, request, pk):
+        try:
+            order = Order.objects.get(pk=pk)
+            new_status = request.data.get('status')
+            if new_status not in dict(Order.STATUS_CHOICES):
+                return Response({'error': 'Invalid status'}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(OrderSerializer(order).data, status=201)
-
+            order.status = new_status
+            order.save()
+            return Response({'message': 'Order status updated'}, status=status.HTTP_200_OK)
+        except Order.DoesNotExist:
+            return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
