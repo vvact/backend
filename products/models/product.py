@@ -12,6 +12,10 @@ class Product(models.Model):
     main_image = models.ImageField(upload_to='products/main/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+
+    class Meta:
+         ordering = ['-created_at']
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = unique_slugify(self, self.name)

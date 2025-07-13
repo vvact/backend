@@ -32,7 +32,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             'images',
             'attributes__attribute',
             'attributes__value'
-        ).all()
+        ).order_by('-created_at')  # 👈 Add ordering here
 
     serializer_class = ProductSerializer
     lookup_field = 'slug'
@@ -40,6 +40,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['category__slug', 'variants__color', 'variants__size']
     search_fields = ['name', 'description']
+
 
     @action(detail=True, methods=['get'], url_path='related')
     def related_products(self, request, slug=None):
