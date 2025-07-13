@@ -6,12 +6,22 @@ from products.models import (
     ProductAttribute
 )
 
-# 🔹 Category
-class CategorySerializer(serializers.ModelSerializer):
+# 🔹 Category with nested children
+
+class SubCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name', 'slug']
         read_only_fields = ['id', 'slug']
+
+class CategorySerializer(serializers.ModelSerializer):
+    children = SubCategorySerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'slug', 'children']
+        read_only_fields = ['id', 'slug']
+
 
 # 🔹 Size
 class SizeSerializer(serializers.ModelSerializer):

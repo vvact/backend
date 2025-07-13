@@ -10,6 +10,8 @@ from products.serializers import (
     AttributeSerializer, AttributeValueSerializer,
     ProductImageSerializer, ProductVariantSerializer
 )
+from rest_framework import filters, viewsets
+from django_filters.rest_framework import DjangoFilterBackend
 
 # 🔹 Categories
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -22,6 +24,16 @@ class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.prefetch_related('variants', 'images', 'attributes').all()
     serializer_class = ProductSerializer
     lookup_field = 'slug'
+
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+
+     # 🎯 These fields allow filtering
+    filterset_fields = ['category', 'variants__color', 'variants__size']
+    
+    # 🔍 These fields allow search (partial match)
+    search_fields = ['name', 'description']
+
+
 
 # 🔹 Sizes
 class SizeViewSet(viewsets.ModelViewSet):
