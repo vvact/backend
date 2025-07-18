@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "myproject"
+version = "0.1.0"
+description = "A Django-based API with Celery and Redis integration"
+authors = [
+    { name = "Your Name", email = "your@email.com" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "Django>=4.0",
+    "djangorestframework",
+    "celery",
+    "redis",
+    "django-cors-headers",
+    "cloudinary",
+    "cloudinary-storage",
+    "gunicorn",
+    "whitenoise",
+    "psycopg2-binary"
+]
+
+[project.urls]
+Homepage = "https://yourprojectsite.com"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+exclude = ["tests", "tests.*"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | env
+  | venv
+  | migrations
+  | staticfiles
+  | mediafiles
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+skip = ["venv", "env", "migrations", "staticfiles", "mediafiles"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "ecommerce_backend.settings"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+addopts = "--reuse-db --tb=short -q"
+norecursedirs = [".*", "build", "dist", "migrations", "env", "venv", "static", "media"]
+testpaths = ["tests"]
+markers = [
+    "slow: marks tests as slow",
+    "integration: marks integration tests"
+]
