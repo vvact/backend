@@ -1,5 +1,5 @@
 from django.db import models
-from products.models.product import Product
+from .product import Product
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
@@ -8,3 +8,6 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.product.name}"
+    
+    class Meta:
+        verbose_name_plural = "ProductImages"

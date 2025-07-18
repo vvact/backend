@@ -4,6 +4,7 @@ from products.models import (
     Attribute, AttributeValue,
     ProductImage, ProductVariant
 )
+from django.db.models import Avg, Count
 from products.serializers import (
     ProductSerializer, CategorySerializer,
     SizeSerializer, ColorSerializer,
@@ -33,6 +34,12 @@ class ProductViewSet(viewsets.ModelViewSet):
             'attributes__attribute',
             'attributes__value'
         ).order_by('-created_at')  # 👈 Add ordering here
+    
+    queryset = Product.objects.all().annotate(
+        average_rating=Avg('reviews__rating'),
+        review_count=Count('reviews')
+    )
+    serializer_class = ProductSerializer
 
     serializer_class = ProductSerializer
     lookup_field = 'slug'
@@ -91,3 +98,5 @@ class ProductImageViewSet(viewsets.ModelViewSet):
 class ProductVariantViewSet(viewsets.ModelViewSet):
     queryset = ProductVariant.objects.all()
     serializer_class = ProductVariantSerializer
+
+

@@ -5,6 +5,9 @@ from products.models import (
     Attribute, AttributeValue,
     ProductAttribute
 )
+from reviews.serializers import ReviewSerializer
+from django.db.models import Avg
+
 
 # 🔹 Category
 class CategorySerializer(serializers.ModelSerializer):
@@ -70,11 +73,34 @@ class ProductImageSerializer(serializers.ModelSerializer):
 class ProductVariantSerializer(serializers.ModelSerializer):
     size = SizeSerializer(read_only=True)
     color = ColorSerializer(read_only=True)
+    discount_percentage = serializers.SerializerMethodField()
+    final_price = serializers.SerializerMethodField()
+    formatted_price = serializers.SerializerMethodField()
+    formatted_original_price = serializers.SerializerMethodField()
 
     class Meta:
         model = ProductVariant
-        fields = ['id', 'size', 'color', 'stock', 'additional_price']
-        read_only_fields = ['id', 'size', 'color']
+        fields = [
+            'id', 'size', 'color', 'stock', 'price',
+            'original_price', 'final_price', 'formatted_price',
+            'formatted_original_price', 'discount_percentage',
+        ]
+        read_only_fields = ['id', 'size', 'color', 'sku']
+
+    def get_discount_percentage(self, obj):
+        percentage = obj.discount_percentage()
+        return f"{percentage}%"
+
+    def get_final_price(self, obj):
+        return f"KSh {obj.price:.2f}"
+
+    def get_formatted_price(self, obj):
+        return f"KSh {obj.price:.2f}"
+
+    def get_formatted_original_price(self, obj):
+        if obj.original_price:
+            return f"KSh {obj.original_price:.2f}"
+        return None
 
 
 # 🔹 Product
@@ -83,15 +109,27 @@ class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
     variants = ProductVariantSerializer(many=True, read_only=True)
     attributes = ProductAttributeSerializer(many=True, read_only=True)
+    reviews = ReviewSerializer(many=True, read_only=True)
+    average_rating = serializers.SerializerMethodField()
+    review_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = [
-            'id', 'name', 'slug', 'description',
-            'base_price', 'stock', 'main_image', 'created_at',
-            'category', 'images', 'variants', 'attributes'
-        ]
+        fields = '__all__'
         read_only_fields = [
             'id', 'slug', 'created_at', 'category',
-            'images', 'variants', 'attributes'
+            'images', 'variants', 'attributes', 'sku', 'reviews',
         ]
+
+    def get_gallery(self, obj):
+        return [image.image.url for image in obj.images.all()]
+
+    def get_average_rating(self, obj):
+        reviews = obj.reviews.all()
+        if reviews.exists():
+            avg = reviews.aggregate(Avg('rating'))['rating__avg']
+            return round(avg, 1)
+        return None
+
+    def get_review_count(self, obj):
+        return obj.reviews.count()

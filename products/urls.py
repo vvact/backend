@@ -1,23 +1,21 @@
-
 # products/urls.py
 from django.urls import path, include
-# Importing the router from the products app
-
 from rest_framework.routers import DefaultRouter
-from products.views import (
-    CategoryViewSet, ProductViewSet, SizeViewSet, ColorViewSet,
-    AttributeViewSet, AttributeValueViewSet,
-    ProductImageViewSet, ProductVariantViewSet
+from .views import (
+    ProductViewSet, CategoryViewSet, SizeViewSet, ColorViewSet,
+    AttributeViewSet, AttributeValueViewSet, ProductImageViewSet, ProductVariantViewSet
 )
 
 router = DefaultRouter()
-router.register(r'categories', CategoryViewSet)
-router.register(r'products', ProductViewSet)
-router.register(r'sizes', SizeViewSet)
-router.register(r'colors', ColorViewSet)
-router.register(r'attributes', AttributeViewSet)
-router.register(r'attribute-values', AttributeValueViewSet)
-router.register(r'images', ProductImageViewSet)
-router.register(r'variants', ProductVariantViewSet)
+router.register('products', ProductViewSet, basename='product')
+router.register('categories', CategoryViewSet, basename='category')
+router.register('sizes', SizeViewSet, basename='size')
+router.register('colors', ColorViewSet, basename='color')
+router.register('attributes', AttributeViewSet, basename='attribute')
+router.register('attribute-values', AttributeValueViewSet, basename='attribute-value')
+router.register('images', ProductImageViewSet, basename='product-image')
+router.register('variants', ProductVariantViewSet, basename='product-variant')
 
-urlpatterns = router.urls
+urlpatterns = [
+    path('', include(router.urls)),
+]

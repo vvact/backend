@@ -20,7 +20,10 @@ sys.path.append(str(BASE_DIR))
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'default-secret-key')
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY is not set in environment variables!")
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
@@ -39,15 +42,18 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'django_filters',
+    'channels',
 
+    'drf_yasg',
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
     'accounts', 
-    'products',
+    'products.apps.ProductsConfig',
     'cart',
     'orders',
     'wishlist',
+    'reviews',
 ]
 
 MIDDLEWARE = [
@@ -134,11 +140,15 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
-
-CORS_ALLOW_ALL_ORIGINS = True
-
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "https://yourdomain.com",
+]
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -159,11 +169,37 @@ REST_FRAMEWORK = {
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
     ],
+
+     'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 24,  # Customize per your frontend UI
+    'PAGE_SIZE': 12,  # Customize per your frontend UI
 }
 
 
 DEFAULT_FROM_EMAIL = 'no-reply@yourdomain.com'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # for testing
-FRONTEND_URL = 'http://localhost:3000'  # or your deployed frontend
+
+
+ASGI_APPLICATION = 'ecommerce_backend.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",  # DB 1
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+
