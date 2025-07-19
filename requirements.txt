@@ -44,7 +44,6 @@ incremental==24.7.2
 inflection==0.5.1
 iniconfig==2.1.0
 kombu==5.5.4
-MetaTrader5==5.0.4993
 numpy==2.2.5
 packaging==24.2
 pillow==11.0.0

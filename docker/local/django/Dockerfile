@@ -1,6 +1,7 @@
-FROM python:3.10-slim-buster
+# Use a more current base image
+FROM python:3.10-slim-bookworm
 
-# Define environment variables
+# Set environment variables
 ENV APP_HOME=/app
 WORKDIR $APP_HOME
 
@@ -16,23 +17,23 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # Install system dependencies
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends \
-     build-essential \
-     libpq-dev \
-     netcat \
-     gettext \
-     gcc \
-     postgresql \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        build-essential \
+        libpq-dev \
+        netcat-openbsd \
+        gettext \
+        gcc \
+        curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 COPY ./requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-# Copy entrypoints and make them executable
+# Copy and fix entrypoint/start scripts
 COPY ./docker/local/django/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint && chmod +x /entrypoint
 
@@ -45,7 +46,7 @@ RUN sed -i 's/\r$//g' /start-celeryworker && chmod +x /start-celeryworker
 COPY ./docker/local/django/celery/flower/start /start-flower
 RUN sed -i 's/\r$//g' /start-flower && chmod +x /start-flower
 
-# Copy app source code
+# Copy project files
 COPY . .
 
 # Entrypoint
