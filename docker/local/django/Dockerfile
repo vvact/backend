@@ -1,48 +1,52 @@
-FROM python:3.10.0-slim-buster
+FROM python:3.10-slim-buster
 
+# Define environment variables
 ENV APP_HOME=/app
-RUN mkdir $APP_HOME
-RUN mkdir $APP_HOME/staticfiles
 WORKDIR $APP_HOME
 
-LABEL maintainer='api.imperfect@gmail.com'
-LABEL youtube="https://www.youtube.com/c/APIImperfect"
-LABEL decription="Development image for Real Estate Project"
+# Create directories
+RUN mkdir -p $APP_HOME/staticfiles
 
-ENV PYTHONDONTWRITEBYTECODE 1
+# Metadata
+LABEL maintainer="vbm7752@.com"
+LABEL description="Development image for Ecomerec E-commerce Project"
 
-ENV PYTHONUNBUFFERED 1
+# Python settings
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
+# Install system dependencies
 RUN apt-get update \
-  && apt-get install -y build-essential \
-  && apt-get install -y libpq-dev \
-  && apt-get install -y gettext \
-  && apt-get -y install netcat gcc postgresql \
-  && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
+  && apt-get install -y --no-install-recommends \
+     build-essential \
+     libpq-dev \
+     netcat \
+     gettext \
+     gcc \
+     postgresql \
+  && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install --upgrade pip
+# Install Python dependencies
+COPY ./requirements.txt .
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
 
-COPY ./requirements.txt /app/requirements.txt 
-
-RUN pip3 install -r requirements.txt
-
+# Copy entrypoints and make them executable
 COPY ./docker/local/django/entrypoint /entrypoint
-RUN sed -i 's/\r$//g' /entrypoint
-RUN chmod +x /entrypoint
+RUN sed -i 's/\r$//g' /entrypoint && chmod +x /entrypoint
 
 COPY ./docker/local/django/start /start
-RUN sed -i 's/\r$//g' /start
-RUN chmod +x /start
-
+RUN sed -i 's/\r$//g' /start && chmod +x /start
 
 COPY ./docker/local/django/celery/worker/start /start-celeryworker
-RUN sed -i 's/\r$//g' /start-celeryworker
-RUN chmod +x /start-celeryworker
+RUN sed -i 's/\r$//g' /start-celeryworker && chmod +x /start-celeryworker
 
 COPY ./docker/local/django/celery/flower/start /start-flower
-RUN sed -i 's/\r$//g' /start-flower
-RUN chmod +x /start-flower
+RUN sed -i 's/\r$//g' /start-flower && chmod +x /start-flower
 
+# Copy app source code
+COPY . .
 
-ENTRYPOINT [ "/entrypoint"]
+# Entrypoint
+ENTRYPOINT ["/entrypoint"]

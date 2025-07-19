@@ -1,13 +1,17 @@
+
+# ecommerce_backend/settings/base.py
+
 from pathlib import Path
 import os
 import sys
 import dotenv
 # Load environment variables from .env file
-dotenv.load_dotenv()
 # Add the project root to the Python path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+dotenv.load_dotenv(dotenv_path=BASE_DIR / '.env')
 
 # Add the project root to the Python path
 sys.path.append(str(BASE_DIR))
@@ -28,7 +32,8 @@ if not SECRET_KEY:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(' ')
+# Parse ALLOWED_HOSTS from environment
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost").split()
 
 
 # Application definition
@@ -40,9 +45,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
+     
+    'django_extensions',
     'django_filters',
     'channels',
+
+    'cloudinary',
+    'cloudinary_storage',
 
     'drf_yasg',
     'rest_framework',
@@ -88,18 +97,24 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'ecommerce_backend.wsgi.application'
+ASGI_APPLICATION = 'ecommerce_backend.asgi.application'
 
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
 
+# # Database (PostgreSQL from Docker)
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.getenv("POSTGRES_DB"),
+#         'USER': os.getenv("POSTGRES_USER"),
+#         'PASSWORD': os.getenv("POSTGRES_PASSWORD"),
+#         'HOST': os.getenv("PG_HOST", "postgres-db"),  # matches docker-compose service name
+#         'PORT': os.getenv("PG_PORT", 5432),
+#     }
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -143,10 +158,26 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+import os
 
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
+
+# If still developing, keep this too:
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
+
+
+# CORS config
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "https://yourdomain.com",
+    "http://127.0.0.1:3000",
+    "http://client:3000",  # Docker internal hostname
 ]
 
 
@@ -182,7 +213,6 @@ DEFAULT_FROM_EMAIL = 'no-reply@yourdomain.com'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # for testing
 
 
-ASGI_APPLICATION = 'ecommerce_backend.asgi.application'
 
 CHANNEL_LAYERS = {
     "default": {

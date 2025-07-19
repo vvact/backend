@@ -1,21 +1,21 @@
 #!/bin/bash
 
 set -o errexit
-
 set -o nounset
 
-
-worker_ready(){
-    celery -A real_estate inspect ping
+# Check if Celery workers are ready
+worker_ready() {
+    celery -A ecommerce_backend inspect ping
 }
 
 until worker_ready; do 
-    >&2 echo 'Celery workers not available :-('
+    >&2 echo 'Waiting for Celery workers to become available...'
     sleep 1
-
 done
->&2 echo 'Celery workers are available and ready!...:-)'
 
+>&2 echo 'Celery workers are available and ready! 🚀'
+
+# Start Flower
 flower \
-    --app=real_estate \
-    --broker="${CELERY_BROKER}"
+    --app=ecommerce_backend \
+    --broker="${CELERY_BROKER:-redis://redis:6379/0}"
