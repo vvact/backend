@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-
-=======
->>>>>>> ef146c4f31d311c9cb8517c38c78faf120394948
 
 services:
   # Django API Service
@@ -26,7 +22,7 @@ services:
 
   # PostgreSQL Database
   postgres-db:
-    image: postgres:12.0-alpine
+    image: postgres:13-alpine
     ports:
       - "5432:5432"  # Optional for local development
     volumes:
