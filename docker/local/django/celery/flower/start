@@ -5,7 +5,7 @@ set -o nounset
 
 # Check if Celery workers are ready
 worker_ready() {
-    celery -A ecommerce_backend inspect ping
+    celery -A ecommerce_backend inspect ping > /dev/null 2>&1
 }
 
 until worker_ready; do 
@@ -16,6 +16,7 @@ done
 >&2 echo 'Celery workers are available and ready! 🚀'
 
 # Start Flower
-flower \
+exec flower \
     --app=ecommerce_backend \
-    --broker="${CELERY_BROKER:-redis://redis:6379/0}"
+    --broker="${CELERY_BROKER:-redis://redis:6379/0}" \
+    --port=5555

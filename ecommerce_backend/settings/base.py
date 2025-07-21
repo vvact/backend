@@ -100,21 +100,8 @@ WSGI_APPLICATION = 'ecommerce_backend.wsgi.application'
 ASGI_APPLICATION = 'ecommerce_backend.asgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 
-# # Database (PostgreSQL from Docker)
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.getenv("POSTGRES_DB"),
-#         'USER': os.getenv("POSTGRES_USER"),
-#         'PASSWORD': os.getenv("POSTGRES_PASSWORD"),
-#         'HOST': os.getenv("PG_HOST", "postgres-db"),  # matches docker-compose service name
-#         'PORT': os.getenv("PG_PORT", 5432),
-#     }
-# }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -230,6 +217,9 @@ CACHES = {
         }
     }
 }
+
+# Optional: Set a custom timeout for cache
+CACHE_TTL = 60 * 15  # 15 minutes
 
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']

@@ -1,5 +1,9 @@
 # ecommerce_backend/settings/production.py
 from .base import *
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 # production.py
 from decouple import config  # or use os.getenv if you prefer
 
@@ -10,16 +14,19 @@ ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split()
 
 
 
+
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'your_db_name',
-        'USER': 'your_db_user',
-        'PASSWORD': 'your_password',
-        'HOST': 'db', 
-        'PORT': '5432',
+        'NAME': os.getenv("POSTGRES_DB"),
+        'USER': os.getenv("POSTGRES_USER"),
+        'PASSWORD': os.getenv("POSTGRES_PASSWORD"),
+        'HOST': os.getenv("PG_HOST", "db"),
+        'PORT': os.getenv("PG_PORT", "5432"),
     }
 }
+
 
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
